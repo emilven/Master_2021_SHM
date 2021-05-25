@@ -3,12 +3,8 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
 from handy import df_preprossecing
-# from scipy.stats import kruskal,f_oneway
 from scipy.stats.mstats import kruskalwallis
-from scipy.optimize import dual_annealing
-from pingouin import kruskal
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler, MinMaxScaler, LabelEncoder
-from sklearn.feature_selection import VarianceThreshold, SelectKBest, chi2, RFE, RFECV, f_classif, \
+from sklearn.feature_selection import VarianceThreshold, SelectKBest, RFE, RFECV, f_classif, \
     mutual_info_classif, SelectFromModel
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
@@ -17,19 +13,16 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.inspection import permutation_importance
-from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from sklearn.decomposition import PCA
-from sklearn import svm
-from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
-from itertools import combinations
 from xgboost import XGBClassifier
 from boruta import BorutaPy
-# from genetic_selection import GeneticSelectionCV
-from gafs import SklearnGeneticSelection
 
-# Koden starter linje ca 600
+# All Feature Selection codes used. All modes takes in a dataframe where 'Damage' is the class label,
+# and will return a new dataframe where features are eliminated. Additionally, all eliminated features
+# can be printed. Some functions can also return the score of features and eliminated features.
+
 def getFeatureList(n_splits, glob=False, filtered=False):
     if filtered == False:
         loc = 'Features_All'
@@ -94,37 +87,6 @@ def combineSensors(sensors, n_splits, wantedFeatures):
     df = pd.concat([df, damage], axis=1)
     return df
 
-def add_interactions(df):
-    # Get feature names
-    combos = list(combinations(list(df.columns), 2))
-    colnames = list(df.columns) + ['_'.join(x) for x in combos]
-    # Find interactions. Kan vurdere å bruke en annen kombinasjon enn polynomial
-    poly = PolynomialFeatures(interaction_only=True, include_bias=False)
-    df = poly.fit_transform(df)
-    df = pd.DataFrame(df)
-    df.columns = colnames
-    # Remove interaction terms with all 0 values
-    noint_indicies = [i for i, x in enumerate(list((df == 0).all())) if x]
-    df = df.drop(df.columns[noint_indicies], axis=1)
-    return df
-
-def createFigure(rankings, threshold, ylabel='', title='', vertical=True):
-    plt.figure(figsize=(9,5))
-    if vertical==True:
-        plt.plot(rankings.index, threshold * np.ones(rankings.size), linestyle='--', color='red', label='threshold')
-        plt.legend()
-        rankings.plot.bar()
-        plt.ylabel(ylabel)
-        plt.yticks(rotation=45, va='top', ha='right', rotation_mode='anchor')
-    else:
-        plt.plot(threshold * np.ones(rankings.size), rankings.index, linestyle='--', color='red', label='threshold')
-        plt.legend()
-        rankings.plot.barh()
-        plt.gca().invert_yaxis()
-        plt.xlabel(ylabel)
-    plt.title(title)
-    plt.tight_layout()
-    plt.show()
 def thresholdEliminate(rankings, threshold, greaterThan=True):
     if greaterThan == False:
         eliminate = rankings[rankings >= threshold]
@@ -133,21 +95,6 @@ def thresholdEliminate(rankings, threshold, greaterThan=True):
         eliminate = rankings[rankings <= threshold]
         keep = rankings[rankings > threshold]
     return keep, eliminate
-def createFigure_k(keep, eliminate, score, title='', ylabel='', vertical=True):
-    plt.figure(figsize=(8,5))
-    if vertical==True:
-        plt.bar(keep, score[keep], width=0.6)
-        plt.bar(eliminate, score[eliminate], color='red', width=0.6)
-        plt.ylabel(ylabel)
-        plt.xticks(rotation=45, va='top', ha='right', rotation_mode='anchor')
-    else:
-        plt.barh(keep, score[keep])
-        plt.barh(eliminate, score[eliminate], color='red')
-        plt.gca().invert_yaxis()
-        plt.xlabel(ylabel)
-    plt.title(title)
-    plt.tight_layout()
-    plt.show()
 
 def ML_method(method):  # LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
     if method == 'LogReg':
@@ -163,12 +110,16 @@ def ML_method(method):  # LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
     return clf
 
 # ----------------Filter Methods-----------------
+
 def check_variance_features(df, threshold=0.0, showElim=False):
-    X = df.drop(['Damage'], 1)  # Verify if the features contains the damage
+    '''Remove constant and semi-constant features.
+    Input:
+        df: Dataframe with features and damage classes
+        threshold: Variance must be higher than'''
+    X = df.drop(['Damage'], 1)
     y = df.Damage
     var_tresh = VarianceThreshold(threshold=threshold)
     var_tresh.fit(X)
-    var_tresh.get_support()
     eliminate = X.columns[var_tresh.get_support()==False]
     keep = X.columns[var_tresh.get_support()]
     if showElim == True:
@@ -178,15 +129,17 @@ def check_variance_features(df, threshold=0.0, showElim=False):
     X['Damage'] = y
     return X
 
-def anova_FS(df, p_value=0.05, showFig=False, showElim=False):
+def anova_FS(df, p_value=0.05, showElim=False):
+    '''Anova filter method with p-value as threshold.
+    Input:
+        df: Dataframe with features and damage classes
+        p-value: features with p-value higher than threshold eliminated.'''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     sel = f_classif(X, y)  # Returns the f-score and the p-value
     p_values = pd.Series(sel[1], index=X.columns)
     p_values.sort_values(ascending=True, inplace=True)
     keep, eliminate = thresholdEliminate(p_values, p_value, greaterThan=False)
-    if showFig == True:
-        createFigure(p_values, p_value, ylabel='p-value', title='ANOVA, p-value',vertical=False)
     if showElim == 1:
         print('Eliminated by ANOVA: %i'%len(eliminate.index))
         print(eliminate.index)
@@ -194,21 +147,25 @@ def anova_FS(df, p_value=0.05, showFig=False, showElim=False):
     X['Damage'] = y
     return X
 
-def kruskal_wallis(df, p_value=0.05, showFig=False, showElim=False):
-    # WORK IN PROGRESS
+def kruskal_wallis(df, p_value=0.05, showElim=False, segments = 50):
+    '''Kruskal Wallis filter method with p-value as threshold.
+    Input:
+        df: Dataframe with features and damage classes
+        p-value: features with p-value higher than threshold eliminated.
+        segments: number of splits in each dataseries'''
+    def f(feat,n, segments):
+        return np.array(feat[n*segments:(n+1)*segments])
     X = df.drop(['Damage'], 1)
     y = df.Damage
-    data = []
+    p_values = np.zeros(X.shape[1])
+    # Get the p-values using Kruskal Wallis
     for i in range(X.shape[1]):
-        tempFeat = X.columns[i]
-        sel = kruskal(X[X.columns[i]], y)
-        data.append(sel[1])
-    p_values = pd.Series(data, index=X.columns)
+        temp = X[X.columns[i]]
+        p_values[i]=kruskalwallis(f(temp,0,segments),f(temp,1,segments),f(temp,2,segments),
+        f(temp,3,segments),f(temp,4,segments),f(temp,5,segments),f(temp,6,segments)).pvalue
+    p_values = pd.Series(p_values,index=X.columns)
     p_values.sort_values(ascending=True, inplace=True)
-    # print(p_values)
     keep, eliminate = thresholdEliminate(p_values, p_value, greaterThan=False)
-    if showFig == True:
-        createFigure(p_values, p_value, ylabel='p-value', title='Kruskal Wallis, p-value')
     if showElim == 1:
         print('Eliminated by Kruskal Wallis: %i'%len(eliminate.index))
         print(eliminate.index)
@@ -216,7 +173,13 @@ def kruskal_wallis(df, p_value=0.05, showFig=False, showElim=False):
     X['Damage'] = y
     return X
 
-def uni_correlation(df, threshold=0.1, method='pearson', absVal=True, showFig=False, showElim=False):
+def uni_correlation(df, threshold=0.1, method='pearson', absVal=True, showElim=False):
+    '''Unicorrelation filter method with p-value as threshold.
+    Input:
+        df: Dataframe with features and damage classes
+        threshold: Correlation coefficient must be higher than
+        method: Correlation method. Choose between 'pearson', 'spearman'
+        absVal: Absolute value of the correlation coefficient'''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     uni_corr = X.corrwith(y,method=method)
@@ -224,8 +187,6 @@ def uni_correlation(df, threshold=0.1, method='pearson', absVal=True, showFig=Fa
         uni_corr = abs(uni_corr)
     uni_corr = uni_corr.sort_values(ascending=False)
     keep, eliminate = thresholdEliminate(uni_corr, threshold, greaterThan=True)
-    if showFig == True:
-        createFigure(uni_corr, threshold, ylabel='Correlation', title='Correlation with Damage, ' + method.capitalize(), vertical=False)
     if showElim == 1:
         print('Eliminated by univariate correlation: %i'%len(eliminate.index))
         print(eliminate.index)
@@ -233,16 +194,17 @@ def uni_correlation(df, threshold=0.1, method='pearson', absVal=True, showFig=Fa
     X['Damage'] = y
     return X, uni_corr
 
-def mutual_information_gain_FS(df, threshold=0.1, showFig=False, showElim=False):
-        # Finds the correlation between the input and output variables
+def mutual_information_gain_FS(df, threshold=0.1, showElim=False):
+    '''Mutual information filter method
+    Input:
+        df: Dataframe with features and damage classes
+        threshold: mutual information must be higher than'''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     mig = mutual_info_classif(X, y)
     mig = pd.Series(mig, index=X.columns)
     mig.sort_values(ascending=False, inplace=True)
     keep, eliminate = thresholdEliminate(mig, threshold, greaterThan=True)
-    if showFig == True:
-        createFigure(mig, threshold, ylabel='Mutual Information, I', title='Mutual Information Gain', vertical=True)
     if showElim == 1:
         print('Eliminated by Mutual Information Gain: %i'%len(eliminate.index))
         print(eliminate.index)
@@ -251,7 +213,17 @@ def mutual_information_gain_FS(df, threshold=0.1, showFig=False, showElim=False)
     return X, mig
 
 def ROC_AUC(df, threshold=0.1, ML='RandomForest', testSize=0.5, avgMethod='macro', multiClass='ovo', auc_mod=True,
-            showFig=False, showElim=False):
+            showElim=False):
+    '''AUC filter method
+    Input:
+        df: Dataframe with features and damage classes
+        threshold: AUC must be higher than
+        ML: Machine Learning method to use. Select between 'LogReg', 'DecisionTree',
+                                'RandomForest', 'ExtremeTree', 'XGB'
+        testSize: Fraction of training data
+        avgMethod: AUC averaging method - Select between 'macro', 'weighted'
+        multiClass: see roc_auc_score documentation
+        auc_mod: score becomes abs(0.5 - auc)'''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize, stratify=y)  # , random_state=10
@@ -262,14 +234,10 @@ def ROC_AUC(df, threshold=0.1, ML='RandomForest', testSize=0.5, avgMethod='macro
         y_pred_proba = clf.predict_proba(X_test[feature].to_frame())
         auc.append(roc_auc_score(y_test, y_pred_proba, multi_class=multiClass, average=avgMethod))
     auc_values = pd.Series(auc, index=X.columns)
-    ylabel = 'AUC'
     if auc_mod == True:
         auc_values = abs(0.5 - auc_values)
-        ylabel = '|0.5 - AUC|'
     auc_values.sort_values(ascending=False, inplace=True)
     keep, eliminate = thresholdEliminate(auc_values, threshold, greaterThan=True)
-    if showFig == True:
-        createFigure(auc_values, threshold, ylabel=ylabel, title='AUC-ranking using ' + ML)
     if showElim == True:
         print('Eliminated by AUC-ROC: %i'%len(eliminate.index))
         print(eliminate.index)
@@ -277,7 +245,14 @@ def ROC_AUC(df, threshold=0.1, ML='RandomForest', testSize=0.5, avgMethod='macro
     X['Damage'] = y
     return X
 
-def model_based_ranking(df, threshold=0.3, ML='RandomForest', testSize=0.5, showFig=False, showElim=False):
+def model_based_ranking(df, threshold=0.3, ML='RandomForest', testSize=0.5, showElim=False):
+    '''Model based ranking filter method
+    Input:
+        df: Dataframe with features and damage classes
+        threshold: predictive accuracy must be higher than
+        ML: Machine Learning method to use. Select between 'LogReg', 'DecisionTree',
+                                'RandomForest', 'ExtremeTree', 'XGB'
+        testSize: Fraction of training data'''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize, stratify=y)  # , random_state=10
@@ -290,9 +265,6 @@ def model_based_ranking(df, threshold=0.3, ML='RandomForest', testSize=0.5, show
     ranking = pd.Series(ranking, index=X.columns)
     ranking.sort_values(ascending=False, inplace=True)
     keep, eliminate = thresholdEliminate(ranking, threshold, greaterThan=True)
-    if showFig == True:
-        createFigure(ranking, threshold, ylabel='Predictive accuracy',
-                     title='Predicive accuracy for each feature using ' + ML)
     if showElim == True:
         print('Eliminated by Model Based Ranking: %i'%len(eliminate.index))
         print(eliminate.index)
@@ -301,6 +273,7 @@ def model_based_ranking(df, threshold=0.3, ML='RandomForest', testSize=0.5, show
     return X, ranking
 
 def find_correlated_features(corrmat, threshold):
+    '''Create list with features that have correlation higher than threshold with at least one other feature'''
     corrmat=abs(corrmat)
     col_corr = set()
     for i in range(len(corrmat.columns)):
@@ -312,6 +285,7 @@ def find_correlated_features(corrmat, threshold):
                 col_corr.add(colname2)
     return col_corr
 def corr_grouping(corrmat, threshold, showGroups=False):
+    '''Create groups of features which correlate'''
     corrdata = corrmat.abs().stack()
     corrdata = corrdata.sort_values(ascending=False)
     corrdata = corrdata[corrdata>threshold]
@@ -332,10 +306,12 @@ def corr_grouping(corrmat, threshold, showGroups=False):
         print('Total Groups: %i'%(len(correlated_groups_list)))
     return correlated_groups_list
 def corr_group_feature_importance(correlated_groups_list, corr_features, X, y, showSelection=False):
+    '''Keep the best feature in each group.
+    Can select method to rank features inside the function.
+    showSelection: shows the the discarded and selected feature for each group'''
     important_features = []
     for group in correlated_groups_list:
         features = list(group.feature1.unique()) + list(group.feature2.unique())
-        # print(features)
         df_group = X[features]
         df_group['Damage'] = y
             # method1 = 'mig' , 'auc' , 'modelBased' , 'treeBased'
@@ -349,30 +325,37 @@ def corr_group_feature_importance(correlated_groups_list, corr_features, X, y, s
         print('Features to Discard:', features_to_discard)
         print('Correlating Features to Keep:', important_features)
     return features_to_discard
-def getBestFeature(df, method1, method2='RandomForest'):    #method1 = 'mig' , 'auc' , 'modelBased' , 'treeBased'
-    showFig=False
+def getBestFeature(df, method1, method2='RandomForest'):
+    '''Sort features by input ranking method.
+        method1: method1 = 'mig' , 'auc' , 'modelBased' , 'treeBased'
+        method2: If the method uses a machine learning method, this is necessary:
+             'DecisionTree', 'RandomForest', 'ExtremeTree', 'XGB' '''
     if method1 == 'mig':
-        df_return = mutual_information_gain_FS(df,threshold=0,showFig=showFig)[0]
+        df_return = mutual_information_gain_FS(df,threshold=0)[0]
     elif method1 == 'auc':
-        df_return = ROC_AUC(df, threshold=0, ML=method2, auc_mod=True,showFig=showFig)
+        df_return = ROC_AUC(df, threshold=0, ML=method2, auc_mod=True)
     elif method1 == 'modelBased':
-        df_return = model_based_ranking(df, threshold=0, ML=method2,showFig=showFig)
+        df_return = model_based_ranking(df, threshold=0, ML=method2)
     elif method1=='treeBased':
-        df_return = tree_based_FS(df,k=1,ML=method2,importance_method='MDI',showFig=showFig)
+        df_return = tree_based_FS(df,k=1,ML=method2,importance_method='MDI')
     return df_return
 
-def multi_correlation_V2(df, threshold=0.85, corr_method='pearson', showGroups=False, showFig=False, showElim=False):
+def multi_correlation_V2(df, threshold=0.85, corr_method='pearson', showGroups=False, showElim=False):
+    '''Remove correlating features.
+    Input:
+        df: Dataframe with features and damage classes
+        threshold: features with correlation coefficient higher than this will be grouped
+        corr_method: Correlation method. Choose between 'pearson', 'spearman'
+        showGroups: Display the groups of correlating features'''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     corrmat = X.corr(method=corr_method)
+    # Create list with features that have correlation higher than threshold with at least one other feature
     corr_features = find_correlated_features(corrmat,threshold)
+    # Create groups of features which correlate
     correlated_groups_list=corr_grouping(corrmat,threshold,showGroups=showGroups)
+    # Keep the best feature in each group
     corr_features_to_discard = corr_group_feature_importance(correlated_groups_list,corr_features,X,y,showSelection=False)
-    if showFig == True:
-        plt.figure()
-        sns.heatmap(corrmat, annot=True, cmap=plt.cm.hot_r)
-        plt.title('Correlating Features, '+corr_method.capitalize())
-        plt.show()
     if showElim == True:
         print('Eliminated by Correlation Method: %i' %len(corr_features_to_discard))
         print(corr_features_to_discard)
@@ -380,27 +363,18 @@ def multi_correlation_V2(df, threshold=0.85, corr_method='pearson', showGroups=F
     X['Damage'] = y
     return X, corr_features_to_discard
 
-def multi_correlation_V3(df, threshold=0.85, corr_method='pearson', showGroups=False, showFig=False, showElim=False):
-    X = df.drop(['Damage'], 1)
-    y = df.Damage
-    corrmat = X.corr(method=corr_method)
-    corr_features = find_correlated_features(corrmat,threshold)
-    correlated_groups_list=corr_grouping(corrmat,threshold,showGroups=showGroups)
-    corr_features_to_discard = corr_group_feature_importance(correlated_groups_list,corr_features,X,y,showSelection=False)
-    if showFig == True:
-        plt.figure()
-        sns.heatmap(corrmat, annot=True, cmap=plt.cm.hot_r)
-        plt.title('Correlating Features, '+corr_method.capitalize())
-        plt.show()
-    if showElim == True:
-        print('Eliminated by Correlation Method: %i' %len(corr_features_to_discard))
-        print(corr_features_to_discard)
-    X = X.drop(corr_features_to_discard, axis=1)
-    X['Damage'] = y
-    return X, corr_features_to_discard, corrmat
-
 # ----------------Wrapper Methods-----------------
-def wrapper_FS(df, forward=True, method='DecisionTree', keep_k=0, floating=False, showFig=False, showElim=False):
+
+def wrapper_FS(df, forward=True, method='DecisionTree', keep_k=0, floating=False, showElim=False):
+    '''Wrapper methods.
+        Input:
+            df: Dataframe with features and damage classes
+            forward: True / False. Select between forward or backwards wrapper method
+            ML: Machine Learning method to use. Select between 'LogReg', 'DecisionTree',
+                                    'RandomForest', 'ExtremeTree', 'XGB'
+            keep_k: select maximum features to keep. Stops when k is reached.
+                If k=0, the whole feature space is checked and the best subset is selected.
+            floating: True/False. Select if floating is enabled or not.'''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     clf = ML_method(method)
@@ -440,15 +414,6 @@ def wrapper_FS(df, forward=True, method='DecisionTree', keep_k=0, floating=False
         ignored_features = list(set(X.columns).symmetric_difference(set(feature_order)))
         print('Ignored Features (Wrapper):')
         print(ignored_features)
-    if showFig == True:
-        title = step + ' Feature Selection, \u279E'
-        createFigure_k(keep,eliminate,score,title,'Accuracy',vertical=False)
-        # plt.barh(lastFeature, best_score)
-        plt.xlim([0, 1])
-        fig1 = plot_sfs(wrapper.get_metric_dict(), kind='std_dev')
-        plt.grid()
-        plt.title(step + ' Feature Selection, \u279E, (w.std_dev)')
-        plt.ylabel('Accuracy')
     if showElim == True:
         print('Features Eliminated from %s Feature Selection: %i'%(step,eliminate))
         print(eliminate)
@@ -457,7 +422,14 @@ def wrapper_FS(df, forward=True, method='DecisionTree', keep_k=0, floating=False
     return X
 
 # ----------------Embedded Methods-----------------
-def regularisation_FS(df, regu_method='L1',showFig=False, showElim=False):
+
+def regularization_FS(df, regu_method='L1', showElim=False):
+    '''Regularization methods.
+    Can change internal variables in methods. Features eliminated sensitive to C.
+    See LogisticRegression documentation for explanations
+        Input:
+            df: Dataframe with features and damage classes
+            regu_method: Select regularization method. Select between 'L1', 'L2', 'ElasticNet' '''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     if regu_method=='L1':
@@ -474,9 +446,6 @@ def regularisation_FS(df, regu_method='L1',showFig=False, showElim=False):
     num_features = sum(sel.get_support())
     selected_features = coef_score[0:num_features].index
     elim_features = coef_score[num_features:].index
-    if showFig==True:
-        title='Coefficient Score using %s Regularization' %(regu_method)
-        createFigure_k(selected_features,elim_features,coef_score,title,'Score')
     if showElim == True:
         print('Features eliminated from %s Regularization: %i' % (regu_method,len(elim_features)))
         print(elim_features)
@@ -484,7 +453,11 @@ def regularisation_FS(df, regu_method='L1',showFig=False, showElim=False):
     X['Damage'] = y
     return X, coef_score, elim_features
 
-def kNN_importance(df, k=0, fig=False, showElim=False):
+def kNN_importance(df, k=0, showElim=False):
+    '''kNN feature importance.
+        input:
+            df: Dataframe with features and damage classes
+            k: number of features to keep. If k = 0, no features are eliminated.'''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     if k == 0 or k > len(X.columns):
@@ -498,8 +471,6 @@ def kNN_importance(df, k=0, fig=False, showElim=False):
     importance = importance.sort_values(ascending=False)
     selected_features = importance[0:k].index
     elim_features = importance[k:].index
-    if fig == True:
-        createFigure_k(selected_features,elim_features,importance,'kNN Importance','Importance')
     if showElim == True:
         print('Features eliminated from kNN importance, k = %i:' %k)
         print(elim_features)
@@ -507,7 +478,14 @@ def kNN_importance(df, k=0, fig=False, showElim=False):
     X['Damage'] = y
     return X, importance
 
-def tree_based_FS(df, k=0, ML='RandomForest', importance_method='MDA', showFig=False, showElim=False):
+def tree_based_FS(df, k=0, ML='RandomForest', importance_method='MDA', showElim=False):
+    '''Tree-based feature importance.
+        input:
+            df: Dataframe with features and damage classes
+            k: number of features to keep. If k = 0, no features are eliminated.
+            ML: Machine Learning method to use. Select between 'DecisionTree', 'RandomForest',
+                            'ExtremeTree', 'XGB'
+            importance_method: Select between 'MDI', 'MDA'. See documentation for more explanation. '''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     clf = ML_method(ML)
@@ -530,13 +508,6 @@ def tree_based_FS(df, k=0, ML='RandomForest', importance_method='MDA', showFig=F
         k = len(X.columns)
     selected_features = importance[0:k].index
     elim_features = importance[k:].index
-    if showFig == True:
-        title = 'Feature Importance (' + importance_method + ') using ' + ML
-        createFigure_k(selected_features,elim_features,importance,title,'Feature Importance',vertical=True)
-        if importance_method == 'MDA':
-            plt.figure()
-            plt.boxplot(importance_MDA.importances[sorted_idx].T, vert=False, labels=X.columns[sorted_idx])
-            plt.title('Permutation Importance')
     if showElim == True:
         print('Features eliminated from %s importance, k = %i:' %(ML,k) )
         print(elim_features)
@@ -544,11 +515,15 @@ def tree_based_FS(df, k=0, ML='RandomForest', importance_method='MDA', showFig=F
     X['Damage'] = y
     return X, importance, elim_features
 
-def boruta_FS(df, ML='ExtremeTree', showFig=False, showElim=True):
+def boruta_FS(df, ML='ExtremeTree', showElim=True):
+    '''Boruta feature importance.
+        input:
+            df: Dataframe with features and damage classes
+            ML: Machine Learning method to use. Select between 'RandomForest', 'ExtremeTree', 'XGB' '''
     X = np.array(df.drop(['Damage'], 1))
     y = np.array(df.Damage)
     clf = ML_method(ML)  # RandomForest, ExtremeTree, XGB
-    feature_selector = BorutaPy(clf, n_estimators='auto', verbose=2)
+    feature_selector = BorutaPy(clf, n_estimators='auto', verbose=2)    # verbose = 2 to see progress
     feature_selector.fit(X, y)
     X_filtered = feature_selector.transform(X)
     feature_names = df.drop(['Damage'], 1).columns
@@ -566,9 +541,6 @@ def boruta_FS(df, ML='ExtremeTree', showFig=False, showElim=True):
             keep.append(boruta_df.Feature[index])
         else:
             eliminate.append(boruta_df.Feature[index])
-    if showFig == True:
-        title = 'Boruta Feature Importance, ' + ML
-        createFigure_k(keep,eliminate,ranking,title,'Ranking',vertical=False)
     if showElim == True:
         print('Eliminated by Boruta: %i'%len(eliminate))
         print(eliminate)
@@ -577,7 +549,17 @@ def boruta_FS(df, ML='ExtremeTree', showFig=False, showElim=True):
     return X, ranking, eliminate, feature_selector
 
 # ----------------Hybrid Methods-----------------
-def recursive_feature_elimination(df, cv=True, rankLim = 0, method='RandomForest', showFig=False, showElim=False):
+
+def recursive_feature_elimination(df, cv=True, rankLim = 0, method='RandomForest', showElim=False):
+    # ML: LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
+    '''Recursive Feature Selection with our without cross validation.
+        Returns the ascending order of which features are best with 1 being best
+        input:
+            df: Dataframe with features and damage classes
+            cv: bool. Include cross validation. Is set to 10 if included.
+            rankLim: select how many features to include. If 0, all features are included.
+            method: Machine Learning method to use. Select between 'LogReg', 'DecisionTree',
+                                    'RandomForest', 'ExtremeTree', 'XGB' '''
     X = df.drop(['Damage'], 1)
     y = df.Damage
     clf=ML_method(method)
@@ -595,9 +577,6 @@ def recursive_feature_elimination(df, cv=True, rankLim = 0, method='RandomForest
         rankLim = max(ranking)
     keep = ranking.index[ranking<=rankLim]
     eliminate = ranking.index[ranking>rankLim]
-    if showFig == True:
-        title = 'Recursive Feature Elimination '+titleText
-        createFigure_k(keep,eliminate,ranking,title,'Ranking',vertical=False)
     if showElim == True:
         print('Features eliminated with RFE: %i'%eliminate)
         print(eliminate)
@@ -624,132 +603,5 @@ def LDA_analysis(df, fig=False):
         axs[1].scatter(X_r2[:, 0], X_r2[:, 1], c=y)
         axs[2].scatter(X_r[:, 0], X_r2[:, 0], c=y)
         plt.show()
-        # # axs = plt.subplots(2, 1)
-        # sns.boxplot(x='class', y='ld1', data=df)
-        plt.show()
 
-# Avventer litt med denne
-def Genetic_analysis(df, method, fig=False):
-    # print(np.shape(df.drop(['Damage'], 1)))
-    E = np.random.uniform(0, 0.1, size=(700, 10))
-    print(E)
-    X = np.hstack((df.drop(['Damage'], 1), E))
-    print(X)
-    y = np.array(df.Damage)
-    if method == 'LogReg':
-        clf = LogisticRegression()
-    elif method == 'DecisionTree':
-        clf = DecisionTreeClassifier()
-    elif method == 'RandomForest':
-        clf = RandomForestClassifier(n_estimators=100, max_features=1)
-    elif method == 'ExtremeTree':
-        clf = ExtraTreesClassifier()
-    elif method == 'XGB':
-        clf = XGBClassifier()
-    selector = GeneticSelectionCV(clf, cv=5, verbose=0, scoring="accuracy", max_features=5,
-                                  n_population=40, crossover_proba=0.5, mutation_proba=0.2,
-                                  n_generations=40, crossover_independent_proba=0.5,
-                                  mutation_independent_proba=0.05, tournament_size=3,
-                                  n_gen_no_change=10, caching=False, n_jobs=1)
-    selector = selector.fit(X, y)
-    print(selector.support_)
-
-
-# ----------------------- DEFINE FEATURES AND DATAFRAMES USED ------------------------#
-
-# splits = 50
-    # Get features
-# features = getFeatureList(splits)
-# print(features)
-# wantedFeatures = list(features[49:52]) + list(features[54:56])
-# print(wantedFeatures)
-
-    # Multiple Sensors
-# df = combineSensors(getSensorList('l')[15:25], splits, wantedFeatures)
-# print(df.shape[1])
-    # Single Sensor
-# df = pd.read_pickle('Features/Features_All/n_splits_50_sensor_AL02.pkl')
-# df = chooseFeatures(df,wantedFeatures)
-
-    # Preprocessing (If not removing constant)
-# df = df_preprossecing(df)
-# print(df.to_string())
-
-
-# --------------------- SELECT METHODS FOR FEATURE SELECTION ------------------------#
-
-# Create interactions between all features
-# df = add_interactions(df)
-
-    # Constant & Quasi-constant feature removal:
-    # Checking and removing features with low variance
-# df = check_variance_features(df, threshold=1e-13, showElim=True)
-# print(df.columns)
-# print(df.shape[1])
-    # Preprocessing
-# df = df_preprossecing(df)
-
-    # Anova feature selection
-# df = anova_FS(df, showFig=True, showElim=True)
-
-    # Kruskal Wallis feature selection
-# df = kruskal_wallis(df,showFig=True, showElim=True)
-
-    # Univariate correlation
-    # Methods: pearson, spearman, kendall
-# df = uni_correlation(df, threshold=0.1, method='kendall', absVal=True, showFig=True, showElim=True)
-
-    # Mutual Information
-# df = mutual_information_gain_FS(df, threshold=0.4, showFig=True, showElim=True)
-
-    # Multivariate correlation
-    # Methods: pearson, spearman, kendall
-# df = multi_correlation_V2(df, threshold=0.85, corr_method='spearman', showFig=False, showElim=True)
-# df = multi_correlation_V2(df, threshold=0.85, corr_method='spearman', showFig=True, showElim=True)
-
-    # ROC-AUC - See 'roc_auc_score' for description of methods.
-    # multiClass: ovo, ovr
-    # avgMethod: macro, weighted
-    # ML: LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
-# df = ROC_AUC(df, threshold=0.1, testSize=0.5, ML='LogReg', avgMethod='macro', multiClass='ovo', auc_mod=True, showFig=True, showElim=True)
-
-    # Model based Ranking
-    # ML: LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
-# df = model_based_ranking(df, threshold=0.3, ML='DecicionTree', testSize=0.8, showFig=True, showElim=True)
-
-# -----Wrapper Methods---------
-
-    # Forward & Backward feature selection, with or without floating
-    # ML: LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
-# df = wrapper_FS(df, forward=True, method='DecisionTree', floating=False, showFig=True, showElim=True)
-
-# ------Embedded Methods-------
-
-    # Regularization Methods
-    # regu_methods = L1, L2, ElasticNet
-    # Sensitiv for endringer i c
-# df = regularisation_FS(df, regu_method='L1', showFig=True, showElim=True)
-
-    # Feature importance using permutation of kNN
-# df = kNN_importance(df, fig=True)
-
-    # Tree based Feature Importance, MDI & MDA
-    # ML: LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
-# df = tree_based_FS(df, k=0, ML='RandomForest', importance_method='MDA', showFig=True, showElim=True)
-
-    # Boruta Feature elimination
-    # ML: RandomForest, ExtremeTree, XGB
-# df = boruta_FS(df, ML='ExtremeTree', showFig=True)
-
-#--------Hybrid Methods---------
-
-    # Recursive Feature Elimination'
-    # Returns the ascending order of which features are best with 1 being best
-    # CV True or False
-    # ML: LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
-# df = recursive_feature_elimination(df, cv=True, rankLim = 3, method='RandomForest', showFig=True, showElim=True)
-
-# ----------Dimensional Reduction Methods------------
-
-# #LDA analysis
-# LDA_test = LDA_analysis(df, fig=True)
+# end
