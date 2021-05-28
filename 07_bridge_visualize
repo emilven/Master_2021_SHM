@@ -12,6 +12,7 @@ filterwarnings('ignore')
 
 # Plots the bridge. Allows for visualization of damage locations, shaker location, sensor locations and
 # change in feature value at every sensors for different states.
+# REQUIRES FILES WITH FEATURES AND DAMAGE STATES!
 
 def state2damage(state):
     """Transform state nr to damage nr"""
