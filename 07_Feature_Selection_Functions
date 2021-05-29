@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
-from handy import df_preprossecing
+from handy import df_preprossecing, getFeatureList, getSensorList, chooseFeatures, combineSensors
 from scipy.stats.mstats import kruskalwallis
 from sklearn.feature_selection import VarianceThreshold, SelectKBest, RFE, RFECV, f_classif, \
     mutual_info_classif, SelectFromModel
@@ -22,70 +22,6 @@ from boruta import BorutaPy
 # All Feature Selection codes used. All modes takes in a dataframe where 'Damage' is the class label,
 # and will return a new dataframe where features are eliminated. Additionally, all eliminated features
 # can be printed. Some functions can also return the score of features and eliminated features.
-
-def getFeatureList(n_splits, glob=False, filtered=False):
-    if filtered == False:
-        loc = 'Features_All'
-    else:
-        loc = 'Features_All_w_Filtering'
-    if glob==False:
-        df = pd.read_pickle('Features/%s/n_splits_%i_sensor_AL02.pkl'%(loc,n_splits))
-    else:
-        df = pd.read_pickle('Features/%s/n_splits_%i_global.pkl'%(loc,n_splits))
-    features = df.columns
-    features = features.drop('Damage')
-    return features
-def getSensorList(sensor_group='all'):
-    Local = ['AL01', 'AL02', 'AL03', 'AL04', 'AL05', 'AL06', 'AL07',
-             'AL08', 'AL09', 'AL10', 'AL11', 'AL12', 'AL13', 'AL14', 'AL15', 'AL16',
-             'AL17', 'AL18', 'AL19', 'AL20', 'AL21', 'AL22', 'AL23', 'AL24', 'AL25',
-             'AL26', 'AL27', 'AL28', 'AL29', 'AL30', 'AL31', 'AL32', 'AL33', 'AL34',
-             'AL35', 'AL36', 'AL37', 'AL38', 'AL39', 'AL40']
-    Globalx = ['AG01x',
-               'AG02x', 'AG03x', 'AG04x', 'AG05x', 'AG06x', 'AG07x', 'AG08x', 'AG09x',
-               'AG10x', 'AG11x', 'AG12x', 'AG13x', 'AG14x', 'AG15x', 'AG16x', 'AG17x', 'AG18x']
-    Globalz = ['AG01z',
-               'AG02z', 'AG03z', 'AG04z', 'AG05z', 'AG06z', 'AG07z', 'AG08z',
-               'AG10z', 'AG11z', 'AG12z', 'AG13z', 'AG14z', 'AG15z', 'AG16z', 'AG17z', 'AG18z']
-    if sensor_group.lower() == 'all':
-        list = Local + Globalz + Globalx
-    elif sensor_group[0].lower() == 'g' and sensor_group[-1].lower() == 'x':
-        list = Globalx
-    elif sensor_group[0].lower() == 'g' and sensor_group[-1].lower() == 'z':
-        list = Globalz
-    elif sensor_group[0].lower() == 'g':
-        list = Globalx + Globalz
-    elif sensor_group[0].lower() == 'l':
-        list = Local
-    return list
-
-def chooseFeatures(df, wantedFeatures):
-    # Excludes features that are not requested
-    # Output: updated dataframe
-    if (type(wantedFeatures) == pd.core.indexes.base.Index):
-        wantedFeatures = wantedFeatures.tolist()
-    allFeatures = df.columns
-    wantedFeatures.append('Damage')
-    for i in allFeatures:
-        if i not in wantedFeatures:
-            df = df.drop([i], 1)
-    return df
-def combineSensors(sensors, n_splits, wantedFeatures):
-    # if (len(sensors) <= 1):
-    #     df = pd.read_pickle('Features/Features_All/n_splits_50_sensor_AL02.pkl')
-    #     df = chooseFeatures(df,wantedFeatures)
-    #     return df
-    df = pd.DataFrame()
-    damage = pd.read_pickle('Features/Features_All/n_splits_' + str(n_splits) + '_sensor_' + sensors[0] + '.pkl')[
-        'Damage']
-    for sensorN in sensors:
-        temp_df = pd.read_pickle('Features/Features_All/n_splits_' + str(n_splits) + '_sensor_' + sensorN + '.pkl')
-        temp_df = chooseFeatures(temp_df, wantedFeatures)
-        temp_df = temp_df.drop('Damage', axis=1)
-        temp_df = temp_df.add_suffix('_' + sensorN)
-        df = pd.concat([df, temp_df], axis=1)
-    df = pd.concat([df, damage], axis=1)
-    return df
 
 def thresholdEliminate(rankings, threshold, greaterThan=True):
     if greaterThan == False:
