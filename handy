@@ -4,7 +4,7 @@ from sklearn import preprocessing
 
 ###
 
-def unpickle(run='02',sensor_group='all',loc=r'C:\Users\emilv\OneDrive\Dokumenter\02. Studier\Masteroppgave\03_Data\100Hz', start='\RUN', end='_100Hz_cut',time=True):
+def unpickle(run='02',sensor_group='all',loc='/03_Data/100Hz', start='/RUN', end='_100Hz_cut',time=True):
     """
     reads a pickle-file into a pandas dataframe, including only specified sensors
     Needs access to acceleration data time series
@@ -19,7 +19,8 @@ def unpickle(run='02',sensor_group='all',loc=r'C:\Users\emilv\OneDrive\Dokumente
     exs:"""
     #df=unpickle(run='02',sensor_group='g')
     #df=unpickle(run=5,sensor_group=['AL01', 'AL02'])
-    #df=unpickle(run=2, sensor_group='all',start='MVS_P2_RUN',end='_100Hz', loc=r'C:\Users\mats-\Documents\Phyton\Skripter\Mastertest\Data\100Hz/')
+    #df=unpickle(run=2, sensor_group='all',start='MVS_P2_RUN',end='_100Hz',
+    #               loc=r'C:\Users\mats-\Documents\Phyton\Skripter\Mastertest\Data\100Hz/')
     Local = ['AL01', 'AL02', 'AL03', 'AL04', 'AL05', 'AL06', 'AL07', 'AL08', 'AL09', 'AL10',
              'AL11', 'AL12', 'AL13', 'AL14', 'AL15', 'AL16', 'AL17', 'AL18', 'AL19', 'AL20',
              'AL21', 'AL22', 'AL23', 'AL24', 'AL25', 'AL26', 'AL27', 'AL28', 'AL29', 'AL30',
