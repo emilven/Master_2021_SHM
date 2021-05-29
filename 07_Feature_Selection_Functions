@@ -24,6 +24,11 @@ from boruta import BorutaPy
 # can be printed. Some functions can also return the score of features and eliminated features.
 
 def thresholdEliminate(rankings, threshold, greaterThan=True):
+    """Eliminates features outside threshold. Implemented in several functions.
+        input:
+            rankings - series of features and their ranks
+            threshold - Set threshold
+            greaterThan - Bool, if the requirement is that they are greater than the threshold"""
     if greaterThan == False:
         eliminate = rankings[rankings >= threshold]
         keep = rankings[rankings < threshold]
@@ -33,16 +38,20 @@ def thresholdEliminate(rankings, threshold, greaterThan=True):
     return keep, eliminate
 
 def ML_method(method):  # LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
+    """Several defined machine learning methods"""
     if method == 'LogReg':
         clf = LogisticRegression(max_iter=150, tol=1e-4, C=5, verbose=0)
     elif method == 'DecisionTree':
         clf = DecisionTreeClassifier()
     elif method == 'RandomForest':
-        clf = RandomForestClassifier(bootstrap=True, criterion='gini', max_depth=4, min_samples_leaf=2, min_samples_split=5,  n_estimators=100, n_jobs=1)  # , max_features=1
+        clf = RandomForestClassifier(bootstrap=True, criterion='gini', max_depth=4, min_samples_leaf=2,
+                                     min_samples_split=5,  n_estimators=100, n_jobs=1)  # , max_features=1
     elif method == 'ExtremeTree':
         clf = ExtraTreesClassifier()
     elif method == 'XGB':
-        clf = XGBClassifier(min_child_weight=1, subsample=0.65, max_depth=5, learning_rate=0.4, gamma=0.4, reg_lambda=3, colsample_bytree=0.3, n_estimators=50,  use_label_encoder=False, n_jobs=1, cv=5, verbosity=0)
+        clf = XGBClassifier(min_child_weight=1, subsample=0.65, max_depth=5, learning_rate=0.4, gamma=0.4,
+                            reg_lambda=3, colsample_bytree=0.3, n_estimators=50,  use_label_encoder=False,
+                            n_jobs=1, cv=5, verbosity=0)
     return clf
 
 # ----------------Filter Methods-----------------
@@ -539,5 +548,35 @@ def LDA_analysis(df, fig=False):
         axs[1].scatter(X_r2[:, 0], X_r2[:, 1], c=y)
         axs[2].scatter(X_r[:, 0], X_r2[:, 0], c=y)
         plt.show()
+
+
+
+
+#------- EXAMPLE OF SETUP -----------
+
+# Define splits
+splits = 50
+
+# Get features
+features = getFeatureList(splits, glob=False, filtered=True)
+# if selected global:
+# df = pd.read_pickle('Features/Features_All/n_splits_50_GLOBAL.pkl')
+
+# Include multiple sensors:
+df = combineSensors(getSensorList('l'), splits, features)
+
+    # If using only a single sensor:
+# df = pd.read_pickle('Features/Features_All/n_splits_50_sensor_AL02.pkl')
+# df = chooseFeatures(df,wantedFeatures)
+
+print('Original Feature Space Size: %i'%(len(df.columns)-1))
+
+# Remove damage states (last interger is damage state to keep)
+# df = df.loc[df.Damage.isin([0,2])].reset_index(drop=True)
+
+    # Preprocessing (NB! Use after constant & Quasi constant if this is included!)
+df = df_preprossecing(df)
+
+# FEATURE SELECTION FUNCTIONS
 
 # end
