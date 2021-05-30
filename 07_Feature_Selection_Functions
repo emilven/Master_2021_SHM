@@ -498,7 +498,8 @@ def boruta_FS(df, ML='ExtremeTree', showElim=True):
 def recursive_feature_elimination(df, cv=True, rankLim = 0, method='RandomForest', showElim=False):
     # ML: LogReg, DecisionTree, RandomForest, ExtremeTree, XGB
     '''Recursive Feature Selection with our without cross validation.
-        Returns the ascending order of which features are best with 1 being best
+        Returns the optimal feature space and scores these features as 1 and
+        the rest of the features in ascending order depending on their performance.
         input:
             df: Dataframe with features and damage classes
             cv: bool. Include cross validation. Is set to 10 if included.
@@ -530,24 +531,26 @@ def recursive_feature_elimination(df, cv=True, rankLim = 0, method='RandomForest
     return X
 
 # ----------Dimensional Reduction Methods------------
-def LDA_analysis(df, fig=False):
-    X = df.drop(['Damage'], 1)
-    y = df.Damage
-    lda = LinearDiscriminantAnalysis(n_components=2)
-    X_r2 = lda.fit(X, y).transform(X)
-    # To include pca analysis to the test.
-    pca = PCA(n_components=4)
-    X_r = pca.fit(X).transform(X)
-    # Denne funker ikke
-    qda = QuadraticDiscriminantAnalysis()
-    X_r3 = qda.fit(X, y)
-    print(X_r3.score)
-    if fig == True:
-        figure, axs = plt.subplots(1, 3)
-        axs[0].scatter(X_r[:, 0], X_r[:, 1], c=y)
-        axs[1].scatter(X_r2[:, 0], X_r2[:, 1], c=y)
-        axs[2].scatter(X_r[:, 0], X_r2[:, 0], c=y)
-        plt.show()
+def Dimensional_Reduction(method='PCA', components=5, data=[]):
+    '''Dimensional reduction methods using PCA or LDA. 
+        Creates the components of the chosen method and returns the explained variance
+        of all the components and the first and second component. 
+        input: 
+            method: 'PCA' or 'LDA'
+            components: Number of components to calculate
+            df: Dataframe with features and damage classes
+    X = data.drop(['Damage'], 1)
+    y = data.Damage
+    if method == 'PCA':
+        model = PCA(n_components=components)
+        model_fit = model.fit(X)
+    else:
+        model = LinearDiscriminantAnalysis(n_components=components)
+        model_fit = model.fit(X,y)
+    Explained_variance = model_fit.explained_variance_ratio_
+    Component_1 = model_fit.transform(X)[:,0]
+    Component_2 = model_fit.transform(X)[:,1]
+    return Explained_variance, Component_1, Component_2
 
 
 
