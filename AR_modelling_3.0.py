@@ -12,7 +12,10 @@ from warnings import filterwarnings
 filterwarnings('ignore')
 
 def AR_basedata(baseline, p):
-    # Extracts (p+1) AR coefficients of a time series and the mean and standard deviation of its residual
+  ''' Extracts (p+1) AR coefficients of a time series and the mean and standard deviation of its residual
+    Input:
+      baseline: dataframe of a time series
+      p: Order of the AR model to create'''
     ar_coef_list = []
     ar_model = AutoReg(baseline, p)
     model = ar_model.fit()
@@ -22,6 +25,13 @@ def AR_basedata(baseline, p):
     return ar_coef_list, mean_b, std_b
 
 def AR_testdata(testdata, p, ar_coef_b, mean_b, std_b):
+      ''' Creates an AR model of a time series, extracts the AR coefficients and creates statistical features.
+    Input:
+      testdata: Timeseries to create model of and extract features
+      p: Order of the AR model to create
+      ar_coef_b: AR coefficients to compare to the model created from testdata
+      mean_b: Mean of the undamaged state
+      std_b: Standard deviation of the undamaged state'''
     ar_model = AutoReg(testdata, p)
     ar_model_fit_t = ar_model.fit()
     ar_coef_t = ar_model_fit_t.params
@@ -29,8 +39,8 @@ def AR_testdata(testdata, p, ar_coef_b, mean_b, std_b):
 
     #Predicting data using undamaged AR coefficients
     ar_model_fit = AutoReg.predict(ar_model, list(ar_coef_b[0]))
-    print((ar_coef_b[0]))
     residual_test = testdata[p::] - ar_model_fit
+    #Features to extract
     mean_t = np.mean(residual_test)
     std_t = np.std(residual_test, ddof=1)
     skewness_t = skew(residual_test)
