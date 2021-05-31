@@ -1,8 +1,15 @@
 # Master_2021_SHM
 
-Authors: M. Kjær, H. Velsvik, E. Vengbo.
+Contains skeleton codes used in the following master thesis:
 
-Contains skeleton codes used in master thesis XXXXXXX.
+  Feature Selection in Structural Health Monitoring
+    Authors: M. Kjær, H. Velsvik, E. Vengbo.
 
-Used following packages:
+      NTNU,
+  Norwegian University of Science and Technology,
+  Faculty of Engineering,
+  Department of Structural Engineering.
+
+
+Packages used:
 pandas, sklearn, numpy, stats, .....
