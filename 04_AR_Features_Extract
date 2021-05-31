@@ -40,6 +40,7 @@ def AR_testdata(testdata, p, ar_coef_b, mean_b, std_b):
     #Predicting data using undamaged AR coefficients
     ar_model_fit = AutoReg.predict(ar_model, list(ar_coef_b[0]))
     residual_test = testdata[p::] - ar_model_fit
+    
     #Features to extract
     mean_t = np.mean(residual_test)
     std_t = np.std(residual_test, ddof=1)
