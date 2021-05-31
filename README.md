@@ -8,8 +8,11 @@ Authors: M. Kjær, H. Velsvik, E. Vengbo.
 
 NTNU,
 Norwegian University of Science and Technology,
+
 Faculty of Engineering,
+
 Department of Structural Engineering.
+
 
 
 Packages used:
