@@ -11,44 +11,6 @@ simplefilter(action='ignore', category=FutureWarning)
 from warnings import filterwarnings
 filterwarnings('ignore')
 
-
-# # Handy
-# def column_names(name_list, number_of_columns, name_of_data):
-#     if name_of_data == 'AR_coef_':
-#         for idx in range(number_of_columns + 1):
-#             name = str(name_of_data) + str(idx)
-#             name_list.append(name)
-#     else:
-#         for idx in range(number_of_columns + 1):
-#             name = str(name_of_data) + str(idx)
-#             name_list.append(name)
-#     return name_list
-#
-# #Handy
-# def choose_n_split(data, str, n_splits):
-#     #Splits the dataframe into a chosen number of columns
-#     names = ['A', 'B','C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
-#              'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'  , 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ',
-#              'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ',
-#              'BA', 'BB', 'BC', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BK', 'BL', 'BM', 'BN', 'BO', 'BP',
-#              'BQ', 'BR', 'BS', 'BT', 'BU', 'BV', 'BW', 'BX', 'BY', 'BZ', 'CA', 'CB', 'CC', 'CD', 'CE', 'CF',
-#              'CG', 'CH', 'CI', 'CJ', 'CK', 'CL', 'CM', 'CN', 'CO', 'CP', 'CQ', 'CR', 'CS', 'CT', 'CU', 'CV',
-#              'CW', 'CX', 'CY', 'CX']
-#     print(len(names))
-#     listen = np.array(data[str])
-#     length = len(listen) // n_splits
-#     #Lage evenly split data
-#     splitted_df = pd.DataFrame()
-#     for i in range (n_splits):
-#         if len(listen[length*i:length*(i+1)]) != length:
-#             print('Length of lists does not match, supressing the last set of data')
-#             break
-#         else:
-#             splitted_df[names[i]] = listen[length*i:length*(i+1)]
-#     if n_splits > len(names):
-#         print('Not enough names')
-#     return splitted_df
-
 def AR_basedata(baseline, p):
     # Extracts (p+1) AR coefficients of a time series and the mean and standard deviation of its residual
     ar_coef_list = []
@@ -64,7 +26,6 @@ def AR_testdata(testdata, p, ar_coef_b, mean_b, std_b):
     ar_model_fit_t = ar_model.fit()
     ar_coef_t = ar_model_fit_t.params
     ar_coef_list = list(ar_coef_t)
-
 
     #Predicting data using undamaged AR coefficients
     ar_model_fit = AutoReg.predict(ar_model, list(ar_coef_b[0]))
@@ -88,16 +49,12 @@ def AR_testdata(testdata, p, ar_coef_b, mean_b, std_b):
 
     return mean_t, std_t, skewness_t, kurtosis_t, outlier_l, outlier_r, amplitude, rms, correlation[1], ar_coef_list
 
-
-# start_time = time.time()
 ar_order = 10
 n_splits = 100
 damage_list = [0, 1, 2, 3, 4, 5, 6]
 feature_names = ['AR_Mean', 'AR_STD', 'AR_Skewness', 'AR_Kurtosis', 'AR_Outlier_L', 'AR_Outlier_R', 'AR_Peak', 'AR_RMS', 'AR_Auto_Corr']
 feature_names = column_names(feature_names, ar_order, 'AR_Coef_')
 feature_names.append('Damage')
-# print(feature_names)
-# sensor_names = ['AL01']
 sensor_names = ['AL01', 'AL02', 'AL03', 'AL04', 'AL05', 'AL06', 'AL07',
               'AL08', 'AL09', 'AL10', 'AL11', 'AL12', 'AL13', 'AL14', 'AL15', 'AL16',
               'AL17', 'AL18', 'AL19', 'AL20', 'AL21', 'AL22', 'AL23', 'AL24', 'AL25',
@@ -108,7 +65,6 @@ sensor_names = ['AL01', 'AL02', 'AL03', 'AL04', 'AL05', 'AL06', 'AL07',
                 'AG02z', 'AG03z', 'AG04z', 'AG05z', 'AG06z', 'AG07z', 'AG08z',
                 'AG10z', 'AG11z', 'AG12z', 'AG13z', 'AG14z', 'AG15z', 'AG16z', 'AG17z', 'AG18z']
 sensor_list = ['sensor_base', 'sensor_05', 'sensor_11', 'sensor_23', 'sensor_26', 'sensor_29', 'sensor_32']
-
 
 baseline = unpickle(run='02')
 df05 = unpickle(run='05')
@@ -129,7 +85,6 @@ for sensor in sensor_names:
     ar_coef_b, mean_b, std_b = AR_basedata(baseline[sensor], ar_order)
     res = []
     for idx, element in enumerate(sensor_list):
-        # print(element)
         for column in eval(element):
             mean_t, sts_t, skewness_t, kurtosis_res, outlier_l, outlier_r, amplitude, rms, correlation, ar_coef_list = AR_testdata(eval(element)[column], ar_order, ar_coef_b, mean_b, std_b)
             results = list([mean_t, sts_t, skewness_t, kurtosis_res, outlier_l, outlier_r, amplitude, rms, correlation] +  ar_coef_list)
@@ -138,10 +93,8 @@ for sensor in sensor_names:
 
 
     features = pd.DataFrame(res, columns=feature_names)
-    print(features.to_string())
     save_path = str('AR_results/AR_output_' + str(n_splits) + str(sensor) + '.pkl')
     features.to_pickle(save_path)
-    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
