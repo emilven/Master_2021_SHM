@@ -25,7 +25,7 @@ def fixtime(df,f=100):
     df.timestamp = np.linspace(0, (df.index[-1]) /f,num=df.index[-1]+1, endpoint=True)
     return df
 def volt_to_acc(df):
-    """from mV to m/s^2"""
+    """from mV to m/s^2 for each sensor"""
     df.AL01 *= 9.81 / 491.75
     df.AL02 *= 9.81 / 490.07
     df.AL03 *= 9.81 / 479.66
@@ -104,8 +104,8 @@ def volt_to_acc(df):
     df.AS *= 9.81 / 99.1
     return df
 
-numberlist=['02','05','11','23','26','29','32']
-loc=r"C:\Users\mats-\Documents\Masteroppgave 2\Masteroppgave 2\_03_Data"
+numberlist=['02','05','11','23','26','29','32']                 # Data set nr
+loc=r"C:\Users\Documents\Masteroppgave\Masteroppgave\_03_Data"  # Input file path
 for i in numberlist:
     df = downsample(volt_to_acc(readtdms(loc + "\MVS_P2_RUN" + str(i) + "_ACCELERATION.tdms")))[10250:92750] #Obtain 100Hz data
     for c in df.columns[1:]: df[c] = detrend(df[c]) #Linear detrening
