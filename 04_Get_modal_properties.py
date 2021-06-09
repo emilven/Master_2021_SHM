@@ -79,11 +79,11 @@ def createBC():
         eigs[i]=f[fpos]
         Shapes[:, i]=u_mat[:,eigs_row[i],fpos]
 
-    improved56=pd.read_pickle('Shapes_g_BC')
-    Shapes[-35:,5]=improved56[:,5] #These was 1 prinsipal, with no forced orthogonality
-    Shapes[-35:,6] = improved56[:,6]#obtained by small tweeks to the program
-    Shapes[:,5]/=np.sum(Shapes[:,5]**2)
-    Shapes[:,6]/=np.sum(Shapes[:,6]**2)
+    #improved56=pd.read_pickle('Shapes_g_BC')  Modeshape 5 and 6 had no forced orthogonality when only global sensors where used
+    #Shapes[-35:,5]=improved56[:,5] #These was 1 prinsipal, with no forced orthogonality
+    #Shapes[-35:,6] = improved56[:,6]#obtained by small tweeks to the program
+    #Shapes[:,5]/=np.sum(Shapes[:,5]**2)
+    #Shapes[:,6]/=np.sum(Shapes[:,6]**2)
     pd.to_pickle(Shapes, 'Shapes_BC')
     pd.to_pickle(eigs, 'eigf_BC')
     return
