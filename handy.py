@@ -4,29 +4,26 @@ from sklearn import preprocessing
 
 ### Note that in some cases, such as when importing files, the default inputs for the optional parameters might be slightly different for every user and not as presented.
 
-def unpickle(run='02',sensor_group='all',loc='/03_Data/100Hz', start='/RUN', end='_100Hz_cut',time=True,runbyindex=False,column_only=False,n_seg = 1, seg_nr = 0,
-            reset_time=False,pos_pad=0,neg_pad=0)):
-	"""
-   	reads a pickle-file into a pandas dataframe, including only specified sensors
-  	Needs access to acceleration data time series
-   	Inputs:
-        run is a number or string exs '02',2,'13',13
-        sensor_group is either the sensors requested or a group.
-        there are four groups. "all"-> all, "globalx" or "Gx" (checks first and last)->Global-x (or z), and global or "g"
-        start and end is to customize the file types
-        loc is path, not required if in same folder see exs, nb! must end with \
-        Recommended to change the default loc in this file if your gonna use it often
-
-        column_only means that only the list of sensor names is returned
-        n_seg is number of segmnets, seg_nr is segment nr
-        runbyindex is wheather or not obtain the runs by their original "file" name (02,05,11...) or the more convenient indexes (0,1,2...)
-        pos_pad, neg_pad, is if a an extended segment whith data from the neigbouring segments are wanted to avoid boundary problems
-    returns pandas dataframe
-    exs:"""
-    #df=unpickle(run='02',sensor_group='g')
-    #df=unpickle(run=5,sensor_group=['AL01', 'AL02'])
-    #df=unpickle(run=2, sensor_group='all',start='MVS_P2_RUN',end='_100Hz',
-    #               loc=r'C:\Users\mats-\Documents\Phyton\Skripter\Master\Data\100Hz/')
+def unpickle(run='02',sensor_group='all',loc='', start='RUN', end='_100Hz_cut',time=True,runbyindex=False,column_only=False,n_seg = 1, seg_nr = 0, reset_time=False,pos_pad=0,neg_pad=0):
+    # reads a pickle-file into a pandas dataframe, including only specified sensors
+    # Needs access to acceleration data time series
+    #Inputs:
+    #    run is a number or string exs '02',2,'13',13
+    #    sensor_group is either the sensors requested or a group.
+    #    there are four groups. "all"-> all, "globalx" or "Gx" (checks first and last)->Global-x (or z), and global or "g"
+    #    start and end is to customize the file types
+    #    loc is path, not required if in same folder see exs, nb! must end with \
+    #    Recommended to change the default loc in this file if your gonna use it often
+    #    column_only means that only the list of sensor names is returned
+    #    n_seg is number of segmnets, seg_nr is segment nr
+    #    runbyindex is wheather or not obtain the runs by their original "file" name (02,05,11...) or the more convenient indexes (0,1,2...)
+    #    pos_pad, neg_pad, is if a an extended segment whith data from the neigbouring segments are wanted to avoid boundary problems
+    #returns pandas dataframe
+    #exs:
+        # df=unpickle(run='02',sensor_group='g')
+        # df=unpickle(run=5,sensor_group=['AL01', 'AL02'])
+        # df=unpickle(run=2, sensor_group='all',start='MVS_P2_RUN',end='_100Hz',
+    #               loc=r'C:\Users\mats-\Documents\Phyton\Skripter\Master\Data\100Hz/')"""
     Local = ['AL01', 'AL02', 'AL03', 'AL04', 'AL05', 'AL06', 'AL07', 'AL08', 'AL09', 'AL10',
              'AL11', 'AL12', 'AL13', 'AL14', 'AL15', 'AL16', 'AL17', 'AL18', 'AL19', 'AL20',
              'AL21', 'AL22', 'AL23', 'AL24', 'AL25', 'AL26', 'AL27', 'AL28', 'AL29', 'AL30',
