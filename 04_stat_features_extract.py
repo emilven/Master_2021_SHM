@@ -91,5 +91,5 @@ for sensorN in sensors:
     stat_coeff.reset_index(drop=True, inplace=True)
 
     #Save sensor features to a file
-    save_path = str('./statData/Stat_output_'+str(n_splits)+'_'+sensorN+'.pkl')
+    save_path = str('Stat_output_'+str(n_splits)+'_'+sensorN+'.pkl')
     stat_coeff.to_pickle(save_path)
