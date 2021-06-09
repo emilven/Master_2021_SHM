@@ -11,6 +11,7 @@ from scipy import integrate
 #These functions get mode features from the files:
 #Shapesn/Shapes_all/BC,eigf_all/BC,s_all
 #Where all denotes all cases and BC denotes base cases.
+#These are made by running 04_Get_modal_properties.py
 #Shapesn are normalised after sensor groups, shapes are nomalised after all sensors
 
 def get_direct():
