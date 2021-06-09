@@ -54,7 +54,7 @@ def unpickle(run='02',sensor_group='all',loc='', start='RUN', end='_100Hz_cut',t
             list = [sensor_group]
     else:
         list=sensor_group
-    if column_only==True:
+    if column_only:
         return list
     if time==True:
         list.insert(0, 'timestamp')
