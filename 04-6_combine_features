@@ -17,26 +17,26 @@ n_splits = 50      # Number of segments
 for element in All:
     # Add the different file names
     # AR-features
-    df1 = pd.read_pickle('Features/Features_Haav/AR_output_' + str(n_splits) + element + '.pkl')
+    df1 = pd.read_pickle('AR_output_' + str(n_splits) + element + '.pkl')
     if 'Damage' in df1.columns:
         dmg = df1.Damage
         df1 = df1.drop(['Damage'], 1)
 
     # Frequency & Time Frequency
-    df2 = pd.read_pickle('Features/Features_Mats/Freq_output_'+str(n_splits)+'_'+element+'.pkl')
-    df3 = pd.read_pickle('Features/Features_Mats/Time_Freq_output_'+str(n_splits)+'_'+element+'.pkl')
+    df2 = pd.read_pickle('Freq_output_'+str(n_splits)+'_'+element+'.pkl')
+    df3 = pd.read_pickle('Time_Freq_output_'+str(n_splits)+'_'+element+'.pkl')
     if 'Damage' in df2.columns:
         df2 = df2.drop(['Damage'], 1)
     if 'Damage' in df3.columns:
         df3 = df3.drop(['Damage'], 1)
 
     # Time domain statistics
-    df4 = pd.read_pickle('Features/Features_Emil/Stat_output_' + str(n_splits) + "_" + element + '.pkl')
+    df4 = pd.read_pickle('Stat_output_' + str(n_splits) + "_" + element + '.pkl')
     if 'Damage' in df4.columns:
         df4 = df4.drop(['Damage'], 1)
 
     new_df = pd.concat([df4, df1, df2, df3], axis=1,  join='outer')
     new_df['Damage'] = dmg
 
-    savepath = str('Features/Features_All/n_splits_' + str(n_splits) + '_sensor_' + element + '.pkl')
+    savepath = str('n_splits_' + str(n_splits) + '_sensor_' + element + '.pkl')
     new_df.to_pickle(savepath)
