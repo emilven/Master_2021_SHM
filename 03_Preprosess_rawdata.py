@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from scipy.signal import decimate,detrend
 
+# In line 108, input file path of measurement data
+
 def readtdms(path):
     """From TDMS file to pandas dataframe"""
     with TdmsFile.read(path) as tdms_file:
