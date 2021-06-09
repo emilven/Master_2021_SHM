@@ -15,7 +15,7 @@ Department of Structural Engineering.
 
 
 Packages used:
-pandas, sklearn, numpy, stats, scikit-learn, xgboost, boruta, scipy, matplotlib, mats, nptdms, statsmodels, ssqueezepy and hurst
+pandas, sklearn, numpy, stats, scikit-learn, xgboost, boruta, scipy, matplotlib, mats, nptdms, statsmodels, ssqueezepy and hurst.
 
 -----------
-Intstructions: The code should be run in consequtive order.
+Instructions: The code should be run in consequtive order.
