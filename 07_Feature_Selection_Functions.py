@@ -562,7 +562,7 @@ splits = 50
 
 # Get features
 # df = pd.read_pickle('n_splits_50_sensor_AL01.pkl')
-features = getFeatureList(splits, glob=True)
+features = getFeatureList(splits, glob=False)
 # if selected global:
 df = pd.read_pickle('Freq_output_50_all.pkl')
 
@@ -581,6 +581,6 @@ print('Original Feature Space Size: %i'%(len(df.columns)-1))
     # Preprocessing (NB! Use after constant & Quasi constant if this is included!)
 df = df_preprossecing(df)
 
-# FEATURE SELECTION FUNCTIONS
+# FEATURE SELECTION FUNCTIONS CAN BE INSERTED BELOW:
 
 
