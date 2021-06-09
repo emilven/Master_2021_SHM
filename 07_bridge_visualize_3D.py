@@ -18,7 +18,7 @@ filterwarnings('ignore')
 #INPUT: DEFINE WANTED FIGURE
 state1 = 0              # Between 0-6. Should be 0, undamaged
 state2 = 4              # Between 0-6.
-feature = 'direct_12'   # Name of feature. NB! Must exist in statFeatureBase
+feature = 'Mode_12'   # Name of feature. NB! Must exist in statFeatureBase
 scale = .6              # Scale of displacement
 c = 'red'               # Colour to plot displaced bridge in
 dataSet = 40            # Data set nr from 0-49
@@ -29,7 +29,6 @@ enableGlobal= 1         # Include truss
 enableSensors=1         # Enable/disable sensors
 enableShaker= 0         # Include shaker
 damageNr = [8]           # Include damages. See below for info
-saveOn = 0
 
 # - State-to-damage-list:
     # State0: Undamaged condition, shaker noise mode, shaker position P2, vertical direction.
@@ -209,7 +208,7 @@ def featureSelect(splitNr,sensors,state,feature):
     n_splits = 50
     featureVal = []
     for sensorN in sensors:
-        df = pd.read_pickle('Features/Features_All/n_splits_'+str(n_splits)+'_sensor_'+sensorN+'.pkl')
+        df = pd.read_pickle('n_splits_'+str(n_splits)+'_sensor_'+sensorN+'.pkl')
         dfMod = df.loc[df['Damage'] == state]
         dfMod = dfMod[feature]
         dfMod = dfMod.iloc[splitNr]
@@ -321,7 +320,4 @@ ax.set_yticks([])
 ax.set_zticks([])
 axisEqual3D(ax)
 plt.tight_layout()
-
-if saveOn == 1:
-    saveName = 'figFolder/ModeShape_State0'+str(state1)+'_Mode_'+feature+'.png'
-    plt.savefig(saveName, transparent=True)
+plt.show()
