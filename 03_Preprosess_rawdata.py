@@ -107,7 +107,7 @@ def volt_to_acc(df):
 numberlist=['02','05','11','23','26','29','32']                 # Data set nr
 loc=r"C:\Users\Documents\Masteroppgave\Masteroppgave\_03_Data"  # Input file path
 for i in numberlist:
-    df = downsample(volt_to_acc(readtdms(loc + "\MVS_P2_RUN" + str(i) + "_ACCELERATION.tdms")))[10250:92750] #Obtain 100Hz data
+    df = downsample(volt_to_acc(readtdms(loc + "\MVS_P2_RUN" + str(i) + "_ACCELERATION.tdms")))[10250:92750] #Cut start and end of time series, downsampling to 100 Hz
     for c in df.columns[1:]: df[c] = detrend(df[c]) #Linear detrening
     df = fixtime(df.reset_index(drop=True)) #Index and time fixing
     df.to_pickle("RUN"+str(i)+"_100Hz_cut") #final timeseries format
