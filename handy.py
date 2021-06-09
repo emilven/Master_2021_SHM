@@ -64,6 +64,22 @@ def unpickle(run='02',sensor_group='all',loc='', start='RUN', end='_100Hz_cut',t
 
 #------------
 
+def column_names(name_list, number_of_columns, name_of_data):
+    #Creates a namelist for a dataframe if there are many similar features, example AR0, AR1, AR2, ...
+    #name_list - data you want to create more names of, can also be an empty list.
+    #number_of_columns - how many columns to add
+    #name_of_data - New column names, example AR0, AR1, ...
+    #Returs name_list with the names for the dataframe.
+    if name_of_data == 'AR_Coef_':
+        for idx in range(number_of_columns + 1):
+            name = str(name_of_data) + str(idx)
+            name_list.append(name)
+    else:
+        for idx in range(number_of_columns):
+            name = str(name_of_data) + str(idx)
+            name_list.append(name)
+    return name_list
+
 def choose_n_split(df, str, n_splits):
     """Splits the dataframe into a chosen number n_splits of columns
         input:
