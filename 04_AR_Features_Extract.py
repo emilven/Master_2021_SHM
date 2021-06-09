@@ -12,10 +12,10 @@ from warnings import filterwarnings
 filterwarnings('ignore')
 
 def AR_basedata(baseline, p):
-  ''' Extracts (p+1) AR coefficients of a time series and the mean and standard deviation of its residual
-    Input:
-      baseline: dataframe of a time series
-      p: Order of the AR model to create'''
+  # Extracts (p+1) AR coefficients of a time series and the mean and standard deviation of its residual
+  #   Input:
+  #     baseline: dataframe of a time series
+  #     p: Order of the AR model to create
     ar_coef_list = []
     ar_model = AutoReg(baseline, p)
     model = ar_model.fit()
@@ -25,13 +25,13 @@ def AR_basedata(baseline, p):
     return ar_coef_list, mean_b, std_b
 
 def AR_testdata(testdata, p, ar_coef_b, mean_b, std_b):
-      ''' Creates an AR model of a time series, extracts the AR coefficients and creates statistical features.
-    Input:
-      testdata: Timeseries to create model of and extract features
-      p: Order of the AR model to create
-      ar_coef_b: AR coefficients to compare to the model created from testdata
-      mean_b: Mean of the undamaged state
-      std_b: Standard deviation of the undamaged state'''
+    # Creates an AR model of a time series, extracts the AR coefficients and creates statistical features.
+    # Input:
+    #   testdata: Timeseries to create model of and extract features
+    #   p: Order of the AR model to create
+    #   ar_coef_b: AR coefficients to compare to the model created from testdata
+    #   mean_b: Mean of the undamaged state
+    #   std_b: Standard deviation of the undamaged state
     ar_model = AutoReg(testdata, p)
     ar_model_fit_t = ar_model.fit()
     ar_coef_t = ar_model_fit_t.params
@@ -57,11 +57,10 @@ def AR_testdata(testdata, p, ar_coef_b, mean_b, std_b):
             outlier_l += 1
         elif element > 1.96:
             outlier_r += 1
-
     return mean_t, std_t, skewness_t, kurtosis_t, outlier_l, outlier_r, amplitude, rms, correlation[1], ar_coef_list
 
 ar_order = 10
-n_splits = 100
+n_splits = 50
 damage_list = [0, 1, 2, 3, 4, 5, 6]
 feature_names = ['AR_Mean', 'AR_STD', 'AR_Skewness', 'AR_Kurtosis', 'AR_Outlier_L', 'AR_Outlier_R', 'AR_Peak', 'AR_RMS', 'AR_Auto_Corr']
 feature_names = column_names(feature_names, ar_order, 'AR_Coef_')
@@ -104,8 +103,6 @@ for sensor in sensor_names:
 
 
     features = pd.DataFrame(res, columns=feature_names)
-    save_path = str('AR_results/AR_output_' + str(n_splits) + str(sensor) + '.pkl')
+    save_path = str('AR_output_' + str(n_splits) + str(sensor) + '.pkl')
     features.to_pickle(save_path)
-
-
 
