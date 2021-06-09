@@ -135,7 +135,7 @@ def featureSelect(splitNr,sensors,state,feature):
     n_splits = 50
     featureVal = []
     for sensorN in sensors:
-        df = pd.read_pickle('Features/Features_All/n_splits_' + str(n_splits) + '_sensor_' + sensorN + '.pkl')
+        df = pd.read_pickle('n_splits_' + str(n_splits) + '_sensor_' + sensorN + '.pkl')
         dfMod = df.loc[df['Damage'] == state]
         dfMod = dfMod[feature]
         dfMod = dfMod.iloc[splitNr]
@@ -278,3 +278,4 @@ for dataSet in segments:
     plt.legend()
     plt.yticks([])
     plt.xticks([])
+    plt.show()
