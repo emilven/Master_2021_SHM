@@ -64,7 +64,6 @@ def get_COMAC(): #Obdtains COMAC
         for sensor in range(shape_all.shape[2]):
             COMAC[seg_nr_tot,sensor]=get_MAC_2(shape_all[seg_nr_tot, :, sensor],shape_BC[sensor,:])
     df=pd.DataFrame(data=COMAC)
-    pd.to_pickle(df,'feature/COMAC')
     return df
 def get_yuen(): #Obdtains yuen function
     eig_all= pd.read_pickle('eigf_all')
