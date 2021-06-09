@@ -128,8 +128,8 @@ def create_hurst_stat_files():
 
 #----------- Create features ----------------
 #These are the feature extraction, these take several days
-create_hurst_stat_files()
-create_holder_files()
+create_hurst_stat_files()   # Takes more than a day to run
+create_holder_files()       # Takes several hours to run
 #----------- Combine features in file ----------------
 element=unpickle(sensor_group='all',column_only='True')
 df1 = pd.read_pickle('feature/time_freq_moment_st_mu')
