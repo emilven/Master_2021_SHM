@@ -538,7 +538,7 @@ def Dimensional_Reduction(method='PCA', components=5, data=[]):
         input: 
             method: 'PCA' or 'LDA'
             components: Number of components to calculate
-            df: Dataframe with features and damage classes
+            df: Dataframe with features and damage classes'''
     X = data.drop(['Damage'], 1)
     y = data.Damage
     if method == 'PCA':
@@ -561,9 +561,10 @@ def Dimensional_Reduction(method='PCA', components=5, data=[]):
 splits = 50
 
 # Get features
-features = getFeatureList(splits, glob=False, filtered=True)
+# df = pd.read_pickle('n_splits_50_sensor_AL01.pkl')
+features = getFeatureList(splits, glob=True)
 # if selected global:
-# df = pd.read_pickle('Features/Features_All/n_splits_50_GLOBAL.pkl')
+df = pd.read_pickle('Freq_output_50_all.pkl')
 
 # Include multiple sensors:
 df = combineSensors(getSensorList('l'), splits, features)
@@ -582,4 +583,4 @@ df = df_preprossecing(df)
 
 # FEATURE SELECTION FUNCTIONS
 
-# end
+
