@@ -53,7 +53,7 @@ def normalize_store_BC_all():
         shape_BC[40:58, i] /= np.linalg.norm(shape_BC[40:58, i])
         shape_BC[58:, i] /= np.linalg.norm(shape_BC[58:, i])
     pd.to_pickle(shape_BC, 'Shapesn_BC')
-    shape_all = pd.read_pickle('all_mode_data')  # seg,eig_i,mode
+    shape_all = pd.read_pickle('Shapes_all')  # seg,eig_i,mode
     for seg_nr_tot in range(shape_all.shape[0]):
         for i in range(shape_all.shape[1]):
             shape_all[seg_nr_tot, i, 0:40] /= np.linalg.norm(shape_all[seg_nr_tot, i, 0:40])
@@ -130,5 +130,3 @@ pd.to_pickle(store_s,'s_all')
 pd.to_pickle(store_eigf,'eigf_all')
 
 normalize_store_BC_all()
-
-
